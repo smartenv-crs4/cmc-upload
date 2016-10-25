@@ -1,0 +1,3 @@
+[submodule "seizero"]
+	path = seizero
+	url = git@gitlab.com:cp2020/seizero.git
