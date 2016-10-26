@@ -1,16 +1,17 @@
-var express = require('express');
-var busboy = require('connect-busboy');
-var router = express.Router();
-var mongo = require('mongodb');
-var mongoConnection = require('../lib/db');
-var Driver = require('../drivers/mongo');
+const express = require('express');
+const busboy = require('connect-busboy');
+const router = express.Router();
+const mongo = require('mongodb');
+const mongoConnection = require('../lib/db');
+const Driver = require('../drivers/mongo');
 
+//TODO add auth middleware
 router.post('/file', (req, res, next) => {
   let driver = new Driver(); //TODO da config e unica istanza per post e get!!!!
   let newFile = {};
   let db = mongoConnection.get();
   let streamCounter = 0;
-  req.busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+  req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
  
     if (!filename) {
       res.boom.badRequest("missing file");
@@ -35,7 +36,12 @@ router.post('/file', (req, res, next) => {
       }
       res.boom.badImplementation();
     });
-   
+
+    file.on('limit', function() {
+      console.log("File size limit reached!");
+      //TODO bloccare stream, cancellare trunc, restituire array file rifiutati
+    });
+  
     writeStream.on('streamError', (err) => {
       res.boom.badImplementation();
     });
@@ -56,19 +62,6 @@ router.post('/file', (req, res, next) => {
     });
   });
 });
-
-
-
-function cleanup(driver, docs) {
-  Object.keys(docs).forEach(function(k, i) {
-    if(k != '_id') { 
-      try { 
-        console.log("Removing chunk " + docs[k]);
-        driver.remove(docs[k]); 
-      } catch(e) {console.log(e);} 
-    }
-  });
-}
 
 
 router.get('/file/:id', (req, res, next) => {
@@ -106,5 +99,26 @@ router.get('/file/:id', (req, res, next) => {
     });
   }
 });
+
+
+router.delete('/file/:id', (req, res, next) => {
+  //TODO
+});
+
+
+
+//private
+function cleanup(driver, docs) {
+  Object.keys(docs).forEach(function(k, i) {
+    if(k != '_id') { 
+      try { 
+        console.log("Removing chunk " + docs[k]);
+        driver.remove(docs[k]); 
+      } catch(e) {console.log(e);} 
+    }
+  });
+}
+
+
 
 module.exports = router;

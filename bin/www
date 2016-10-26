@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('upload-ms:server');
 var http = require('http');
+var config = require('config');
 var db = require('../lib/db')
 
 /**
@@ -20,7 +21,7 @@ var server = undefined;
 /**
  * Connect to Mongo.
  */
-db.connect('mongodb://localhost:27017/images', function(err) {
+db.connect(config.mongo.url, function(err) {
   if (err) {
     console.log('Unable to connect to Mongo.')
     process.exit(1)

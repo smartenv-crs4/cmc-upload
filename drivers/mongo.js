@@ -1,12 +1,8 @@
-var db = require('../lib/db');
-var Grid = require('gridfs-stream');
-var mongo = require('mongodb');
-var Stream = require('stream');
+const db = require('../lib/db');
+const Grid = require('gridfs-stream');
+const mongo = require('mongodb');
 
 const EventEmitter = require('events');
-const MongoStreams = require('stream');
-
-class MongoStream extends MongoStreams {}
 
 class DriverStream extends EventEmitter {
   constructor(newStream){

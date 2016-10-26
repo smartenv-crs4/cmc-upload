@@ -1,18 +1,19 @@
-var express = require('express');
-var path = require('path');
-var logger = require('morgan');
-var bodyParser = require('body-parser');
-var boom = require('express-boom');
-var busboy = require('connect-busboy');
-var app = express();
-var file = require('./routes/file');
+const express = require('express');
+const path = require('path');
+const logger = require('morgan');
+const bodyParser = require('body-parser');
+const boom = require('express-boom');
+const busboy = require('connect-busboy');
+const app = express();
+const file = require('./routes/file');
+const config = require('config');
 
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(boom());
-app.use(busboy({immediate:true}));
+app.use(busboy({immediate:true, limits:{fileSize:config.sizeLimit}}));
 app.use('/', file);
 
 // catch 404 and forward to error handler
