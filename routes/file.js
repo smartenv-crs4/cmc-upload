@@ -1,71 +1,110 @@
 var express = require('express');
-var mongo = require('mongodb');
-var Grid = require('gridfs-stream');
 var busboy = require('connect-busboy');
 var router = express.Router();
-var db = require('../lib/db');
-
+var mongo = require('mongodb');
+var mongoConnection = require('../lib/db');
+var Driver = require('../drivers/mongo');
 
 router.post('/file', (req, res, next) => {
-  var gfs = Grid(db.get(), mongo);
+  let driver = new Driver(); //TODO da config e unica istanza per post e get!!!!
+  let newFile = {};
+  let db = mongoConnection.get();
+  let streamCounter = 0;
   req.busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
+ 
     if (!filename) {
       res.boom.badRequest("missing file");
       return;
     }
 
-    var mongoWriteStream = gfs.createWriteStream({
-      filename: filename
-    });
-    file.pipe(mongoWriteStream);
-
-    mongoWriteStream.on('error',(err) => {
-      console.log(err);
-      res.boom.badImplementation();
-    });
+    let writeStream = driver.newWriteStream(filename);
+    streamCounter++;
+    file.pipe(writeStream.getStream());
 
     file.on('error', function(err) {
-      console.log('Error while savomg the stream: ', err);
-      mongoWriteStream.close((file) => {
-        console.log('Removing file chunks from db');
-        gfs.remove({_id:file._id}, (err) => {
-          if(err) console.log(err);
-        }); 
-      })
+      console.log(err);
+      try {
+        writeStream.close((file) => { //TODO test!!!!
+          console.log('Removing file chunks from db');
+          driver.remove(file.filecode);
+        })
+      }
+      catch(e) {
+        console.log("WARNING: unable to remove chunk after upload failure")
+        console.log(e);
+      }
       res.boom.badImplementation();
     });
-    
-    mongoWriteStream.on('close', (file) => {
-      res.json({filecode:file._id, filename:file.filename});
+   
+    writeStream.on('streamError', (err) => {
+      res.boom.badImplementation();
     });
-
+ 
+    writeStream.on('streamClose', (storedFile) => {
+      newFile[fieldname] = storedFile.filecode; 
+      if(--streamCounter == 0) {
+        db.collection('files').insert(newFile, (err, result) => {
+          if(err) {
+            console.log(err);
+            cleanup(driver, newFile);
+            res.boom.badImplementation();
+            return;
+          }
+          res.json({filecode:newFile._id});
+        });
+      }
+    });
   });
 });
 
 
+
+function cleanup(driver, docs) {
+  Object.keys(docs).forEach(function(k, i) {
+    if(k != '_id') { 
+      try { 
+        console.log("Removing chunk " + docs[k]);
+        driver.remove(docs[k]); 
+      } catch(e) {console.log(e);} 
+    }
+  });
+}
+
+
 router.get('/file/:id', (req, res, next) => {
-  var gfs = Grid(db.get(), mongo);
+  let driver = new Driver();
   let id = req.params.id;
+  let tag = req.query.tag;
+  let db = mongoConnection.get();
   if(!id) res.boom.badRequest('Missing file id');
   else {
-    gfs.exist({_id:id}, function (err, found) {
-      if (err) return handleError(err);
-      if(found) {
-
-        var readstream = gfs.createReadStream({_id: id});
-        readstream.pipe(res);
-  
-        readstream.on('error', function (err) {
-          console.log(err);
-          res.boom.badImplementation();
-        });
+    db.collection('files').findOne({_id:new mongo.ObjectId(id)}, function(err, result) {
+      if(err) {
+        res.boom.badImplementation();
+        return;
       }
-      else {
+      if(!result) {
         res.boom.notFound();
+        return;
       }
-    }); 
+      //if tag is missing returns the first item
+      if(!tag || tag.length == 0) {
+        let keys = Object.keys(result);
+        for(let i=0; i<keys.length;i++) {
+          if(keys[i] != '_id') {
+            tag = keys[i];
+            break;
+          }
+        }
+      }
+      if(!result[tag]) {
+        res.boom.notFound();
+        return;
+      }
+      let readStream = driver.newReadStream(result[tag]).getStream();
+      readStream.pipe(res); 
+    });
   }
 });
-
 
 module.exports = router;
