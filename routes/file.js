@@ -3,7 +3,7 @@ const busboy = require('connect-busboy');
 const router = express.Router();
 const mongo = require('mongodb');
 const mongoConnection = require('../lib/db');
-const Driver = require('../drivers/mongo');
+const Driver = require('../drivers/mongo').Driver;
 
 //TODO add auth middleware
 router.post('/file', (req, res, next) => {
@@ -26,7 +26,7 @@ router.post('/file', (req, res, next) => {
     file.on('error', function(err) {
       console.log(err);
       try {
-        writeStream.close((file) => { //TODO test!!!!
+        writeStream.close((file) => {
           console.log('Removing file chunks from db');
           driver.remove(file.filecode);
         })
@@ -35,21 +35,16 @@ router.post('/file', (req, res, next) => {
         console.log("WARNING: unable to remove chunk after upload failure")
         console.log(e);
       }
-      res.boom.badImplementation();
     });
 
     file.on('limit', function() {
       console.log("File size limit reached!");
       failed.push(fieldname);
-      writeStream.getStream().destroy();
+      writeStream.destroy();
     });
   
-    writeStream.on('streamError', (err) => {
-      streamCounter--;
-    });
- 
     writeStream.on('streamClose', (storedFile) => {
-
+      streamCounter--;
       if(file.truncated) {
         try {
           console.log("Cleaning truncated chunk");
@@ -60,17 +55,16 @@ router.post('/file', (req, res, next) => {
         }
       }
       else {
-        streamCounter--;
         newFile[fieldname] = storedFile.filecode; 
       }
       if(streamCounter == 0 && Object.keys(newFile).length > 0) {
-        db.collection('files').insert(newFile, (err, result) => {
+        db.collection('files').insertOne(newFile, (err, result) => {
           if(err) {
             console.log(err);
             cleanup(driver, newFile);
             res.boom.badImplementation();
           }
-          res.json({filecode:newFile._id, failed:failed});
+          else res.json({filecode:result.insertedId, failed:failed});
         });
       }
       else if(streamCounter == 0 && Object.keys(newFile).length == 0) {
@@ -119,7 +113,24 @@ router.get('/file/:id', (req, res, next) => {
 
 
 router.delete('/file/:id', (req, res, next) => {
-  //TODO
+  let driver = new Driver();
+  let id = req.params.id;
+  let db = mongoConnection.get();
+  try {
+    db.collection('files').findOne({_id:new mongo.ObjectId(id)}, (err, result) => {
+      Object.keys(result).forEach((k, i) => {
+        if(k != '_id') driver.remove(result[k]);
+      });
+      db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
+        if(e) res.boom.badImplementation();
+        else res.end();
+      });
+    });
+  }
+  catch(e) {
+    console.log(e);
+    res.boom.badImplementation();
+  }
 });
 
 
@@ -131,7 +142,8 @@ function cleanup(driver, docs) {
       try { 
         console.log("Removing chunk " + docs[k]);
         driver.remove(docs[k]); 
-      } catch(e) {console.log(e);} 
+      } 
+      catch(e) {console.log(e);} 
     }
   });
 }
