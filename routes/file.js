@@ -11,6 +11,7 @@ router.post('/file', (req, res, next) => {
   let newFile = {};
   let db = mongoConnection.get();
   let streamCounter = 0;
+  let failed = []
   req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
  
     if (!filename) {
@@ -39,25 +40,41 @@ router.post('/file', (req, res, next) => {
 
     file.on('limit', function() {
       console.log("File size limit reached!");
-      //TODO bloccare stream, cancellare trunc, restituire array file rifiutati
+      failed.push(fieldname);
+      writeStream.getStream().destroy();
     });
   
     writeStream.on('streamError', (err) => {
-      res.boom.badImplementation();
+      streamCounter--;
     });
  
     writeStream.on('streamClose', (storedFile) => {
-      newFile[fieldname] = storedFile.filecode; 
-      if(--streamCounter == 0) {
+
+      if(file.truncated) {
+        try {
+          console.log("Cleaning truncated chunk");
+          driver.remove(storedFile.filecode); 
+        } 
+        catch(e) {
+          console.log(e);
+        }
+      }
+      else {
+        streamCounter--;
+        newFile[fieldname] = storedFile.filecode; 
+      }
+      if(streamCounter == 0 && Object.keys(newFile).length > 0) {
         db.collection('files').insert(newFile, (err, result) => {
           if(err) {
             console.log(err);
             cleanup(driver, newFile);
             res.boom.badImplementation();
-            return;
           }
-          res.json({filecode:newFile._id});
+          res.json({filecode:newFile._id, failed:failed});
         });
+      }
+      else if(streamCounter == 0 && Object.keys(newFile).length == 0) {
+        res.boom.badImplementation();
       }
     });
   });

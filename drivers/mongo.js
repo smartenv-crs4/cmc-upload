@@ -14,7 +14,7 @@ class DriverStream extends EventEmitter {
     });
  
     this.stream.on('close', (file) => {
-      this.emit('streamClose', file ? {filecode:file._id, filename:file.filename} : '');
+      this.emit('streamClose', file ? {filecode:file._id} : '');
     });
   }
 
@@ -40,9 +40,16 @@ Driver.prototype.newReadStream = function(id) {
 }
 
 Driver.prototype.remove = function(id) {
-  this.gfs.remove({_id:id}, (err) => {
-    if(err) console.log(err); //TODO return??
-  }); 
+  try {
+    this.gfs.remove({_id:id}, (err) => {
+      if(err) console.log(err); //TODO return??
+    }); 
+  }
+  catch(e) {
+    console.log("------------------");
+    console.log(e); 
+    console.log("------------------");
+  }
 }
 
 Driver.prototype.exists = function(id, cb) {
