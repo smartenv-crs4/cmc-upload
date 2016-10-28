@@ -23,7 +23,7 @@ class BaseDriverStream extends EventEmitter {
   * @param  id  The id of the new stored resource written by this stream
   */
   emitClose(id) {
-    this.emit('streamClose', {id});
+    this.emit('streamClose', id);
   }
 
   getStream() {return this.stream;}

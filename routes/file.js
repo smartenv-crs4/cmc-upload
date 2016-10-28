@@ -16,7 +16,7 @@ const Driver = require('../drivers/' + config.driver).Driver;
  *                 fieldname attribute of the multipart field, that should be passed to the GET method to retrieve the chunk.
  *
  * @apiSuccess (200) {Object} body A Json containig the stored resource id and, an array containing failed uploads fieldname, if any.
- * @apiSuccessExample: {json} Success-Response:
+ * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
  *     {
  *       "filecode": "ABCDEFG1234",
@@ -101,7 +101,7 @@ router.post('/file', (req, res, next) => { //TODO auth middleware
  * @api {get} /file/:id Return a stored resource
  * @apiGroup Upload
  *
- * @apiDescription  Retrieves a resource from the storage system by id. To get a particular chunk, if 
+ * @apiDescription  Retrieves a resource by id from the storage system. To get a particular chunk, if 
  *                  multiple were uploaded in a single multipart request (see POST method), you can access
  *                  the requested chunk passing the fieldname used in the multipart upload request: <i>?tag=fieldname</i>
  * @apiParam  {String} id   The unique identifier of the resource
@@ -139,13 +139,13 @@ router.get('/file/:id', (req, res, next) => {
         res.boom.notFound();
         return;
       }
-      let readStream = driver.newReadStream(result[tag]).getStream();
-      if(!(writeStream instanceof DriverStream)) {
-        console.log("Invalid Driver stream, must be instance of DriverStream, check your driver implementation");
+      let readStream = driver.newReadStream(result[tag]);
+      if(!(readStream instanceof DriverStream)) {
+        console.log("Invalid Driver stream, must be instance of DriverStream, check your driver implementation--");
         res.boom.badImplementation;
         return;
       }
-      readStream.pipe(res); 
+      readStream.getStream().pipe(res); 
     });
   }
 });
@@ -160,7 +160,7 @@ router.get('/file/:id', (req, res, next) => {
  *                  are deleted too.
  * @apiParam  {String} id   The unique identifier of the resource
  *
- * @apiSuccess (200)
+ * @apiSuccess (200) The file is removed
  */
 router.delete('/file/:id', (req, res, next) => {
   let driver = new Driver();

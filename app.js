@@ -8,13 +8,19 @@ const app = express();
 const file = require('./routes/file');
 const config = require('config');
 
+let prefix = '/api/v1'; //TODO gestire meglio
+
 app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(boom());
 app.use(busboy({immediate:true, limits:{fileSize:config.sizeLimit}}));
-app.use('/', file);
+
+//routes
+app.use(prefix + '/doc', express.static('doc',{root:'doc'}));
+app.use(prefix, file);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
