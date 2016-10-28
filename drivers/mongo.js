@@ -13,6 +13,12 @@ class DriverStream extends BaseDriverStream {
   }
 }
 
+/**
+  * To implement a new driver you must define a new class similar to the following one.
+  *
+  * NOTE that newWriteStream and newReadStream must return BaseDriverStream object, not
+  * a simple stream object.
+  */
 class Driver {
   constructor() {
     this.gfs = Grid(db.get(), mongo);

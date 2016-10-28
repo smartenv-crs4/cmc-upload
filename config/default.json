@@ -2,7 +2,6 @@
   "mongo": {
     "url":"mongodb://localhost:27017/uploads"
   },
-  "driver":"",
-//  "sizeLimit":30024
+  "driver":"mongo",
   "sizeLimit":1048576
 }

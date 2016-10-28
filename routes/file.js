@@ -3,11 +3,28 @@ const busboy = require('connect-busboy');
 const router = express.Router();
 const mongo = require('mongodb');
 const mongoConnection = require('../lib/db');
-const Driver = require('../drivers/mongo').Driver;
+const config = require('config');
+const DriverStream = require('../drivers/base');
+const Driver = require('../drivers/' + config.driver).Driver;
 
-//TODO add auth middleware
-router.post('/file', (req, res, next) => {
-  let driver = new Driver(); //TODO da config e unica istanza per post e get!!!!
+/**
+ * @api {post} /file/ Store a new file on your remote storage system
+ * @apiGroup Upload
+ *
+ * @apiDescription Read a multipart request looking for <i>file</i> fields and streams them to your remote storage system.
+ *                 Multiple file field in the same request are stored as a sigle resource, each chunk is identified by the 
+ *                 fieldname attribute of the multipart field, that should be passed to the GET method to retrieve the chunk.
+ *
+ * @apiSuccess (200) {Object} body A Json containig the stored resource id and, an array containing failed uploads fieldname, if any.
+ * @apiSuccessExample: {json} Success-Response:
+ *     HTTP/1.1 200 OK
+ *     {
+ *       "filecode": "ABCDEFG1234",
+ *       "failed": ["chunk1", "chunk2"]
+ *     }
+ */
+router.post('/file', (req, res, next) => { //TODO auth middleware
+  let driver = new Driver();
   let newFile = {};
   let db = mongoConnection.get();
   let streamCounter = 0;
@@ -20,6 +37,11 @@ router.post('/file', (req, res, next) => {
     }
 
     let writeStream = driver.newWriteStream(filename);
+    if(!(writeStream instanceof DriverStream)) {
+      console.log("Invalid Driver stream, must be instance of BaseDriverStream, check your driver implementation");
+      res.boom.badImplementation('Invalid storage driver');
+      return;
+    }
     streamCounter++;
     file.pipe(writeStream.getStream());
 
@@ -43,19 +65,19 @@ router.post('/file', (req, res, next) => {
       writeStream.destroy();
     });
   
-    writeStream.on('streamClose', (storedFile) => {
+    writeStream.on('streamClose', (storedFileId) => {
       streamCounter--;
       if(file.truncated) {
         try {
           console.log("Cleaning truncated chunk");
-          driver.remove(storedFile.filecode); 
+          driver.remove(storedFileId); 
         } 
         catch(e) {
           console.log(e);
         }
       }
       else {
-        newFile[fieldname] = storedFile.filecode; 
+        newFile[fieldname] = storedFileId; 
       }
       if(streamCounter == 0 && Object.keys(newFile).length > 0) {
         db.collection('files').insertOne(newFile, (err, result) => {
@@ -75,6 +97,18 @@ router.post('/file', (req, res, next) => {
 });
 
 
+/**
+ * @api {get} /file/:id Return a stored resource
+ * @apiGroup Upload
+ *
+ * @apiDescription  Retrieves a resource from the storage system by id. To get a particular chunk, if 
+ *                  multiple were uploaded in a single multipart request (see POST method), you can access
+ *                  the requested chunk passing the fieldname used in the multipart upload request: <i>?tag=fieldname</i>
+ * @apiParam  {String} id   The unique identifier of the resource
+ * @apiParam  {String} tag  The identifier of the requested chunk, if missing first the one found is returned
+ *
+ * @apiSuccess (200) {Stream} The file stream.
+ */
 router.get('/file/:id', (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
@@ -106,12 +140,28 @@ router.get('/file/:id', (req, res, next) => {
         return;
       }
       let readStream = driver.newReadStream(result[tag]).getStream();
+      if(!(writeStream instanceof DriverStream)) {
+        console.log("Invalid Driver stream, must be instance of DriverStream, check your driver implementation");
+        res.boom.badImplementation;
+        return;
+      }
       readStream.pipe(res); 
     });
   }
 });
 
 
+/**
+ * @api {delete} /file/:id Delete a resource from the storage system
+ * @apiGroup Upload
+ *
+ * @apiDescription  Deletes the resource identified by <i>id</i>. 
+ *                  All the associated chunks (multipart multi file)
+ *                  are deleted too.
+ * @apiParam  {String} id   The unique identifier of the resource
+ *
+ * @apiSuccess (200)
+ */
 router.delete('/file/:id', (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
@@ -135,7 +185,6 @@ router.delete('/file/:id', (req, res, next) => {
 
 
 
-//private
 function cleanup(driver, docs) {
   Object.keys(docs).forEach(function(k, i) {
     if(k != '_id') { 
