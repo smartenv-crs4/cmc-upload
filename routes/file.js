@@ -65,19 +65,19 @@ router.post('/file', (req, res, next) => { //TODO auth middleware
       writeStream.destroy();
     });
   
-    writeStream.on('streamClose', (storedFileId) => {
+    writeStream.on('streamClose', (storedFile) => {
       streamCounter--;
       if(file.truncated) {
         try {
           console.log("Cleaning truncated chunk");
-          driver.remove(storedFileId); 
+          driver.remove(storedFile.id); 
         } 
         catch(e) {
           console.log(e);
         }
       }
       else {
-        newFile[fieldname] = storedFileId; 
+        newFile[fieldname] = storedFile;
       }
       if(streamCounter == 0 && Object.keys(newFile).length > 0) {
         db.collection('files').insertOne(newFile, (err, result) => {
@@ -139,12 +139,13 @@ router.get('/file/:id', (req, res, next) => {
         res.boom.notFound();
         return;
       }
-      let readStream = driver.newReadStream(result[tag]);
+      let readStream = driver.newReadStream(result[tag].id);
       if(!(readStream instanceof DriverStream)) {
         console.log("Invalid Driver stream, must be instance of DriverStream, check your driver implementation--");
         res.boom.badImplementation;
         return;
       }
+      res.set('Content-Length', result[tag].size);
       readStream.getStream().pipe(res); 
     });
   }
@@ -168,12 +169,17 @@ router.delete('/file/:id', (req, res, next) => {
   let db = mongoConnection.get();
   try {
     db.collection('files').findOne({_id:new mongo.ObjectId(id)}, (err, result) => {
-      Object.keys(result).forEach((k, i) => {
-        if(k != '_id') driver.remove(result[k]);
-      });
-      db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
-        if(e) res.boom.badImplementation();
-        else res.end();
+      cleanup(driver, result, (err) => {
+        if(err) {
+          console.log(err);
+          res.boom.badImplementation();
+        }
+        else {
+          db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
+            if(e) res.boom.badImplementation();
+            else res.end();
+          });
+        }
       });
     });
   }
@@ -185,12 +191,15 @@ router.delete('/file/:id', (req, res, next) => {
 
 
 
-function cleanup(driver, docs) {
+function cleanup(driver, docs, cb) {
   Object.keys(docs).forEach(function(k, i) {
     if(k != '_id') { 
       try { 
-        console.log("Removing chunk " + docs[k]);
-        driver.remove(docs[k]); 
+        console.log("Removing chunk " + docs[k].id);
+        driver.remove(docs[k].id, (err) => {
+          if(err) console.log(err);
+          if(cb) cb(err);
+        }); 
       } 
       catch(e) {console.log(e);} 
     }

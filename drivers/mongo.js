@@ -8,7 +8,7 @@ class DriverStream extends BaseDriverStream {
     super(newStream);
  
     this.stream.on('close', (file) => {
-      super.emitClose(file ? file._id : '');
+      super.emitClose(file ? {id:file._id, size:file.length} : '');
     });
   }
 }
@@ -32,12 +32,13 @@ class Driver {
     return new DriverStream(this.gfs.createReadStream({_id: id}));
   }
 
-  remove(id) {
+  remove(id, cb) {
     try {
       this.gfs.remove({_id:id}, (err) => {
         if(err) {
-          console.log(err);
+          cb(err)
         }
+        else cb();
       }); 
     }
     catch(e) {
@@ -49,9 +50,9 @@ class Driver {
     this.gfs.exist({_id:id}, function (err, found) {
       if(err) {
         console.log(err);
-        return;
+        cb(err);
       }
-      cb(found);
+      cb(undefined, found);
     });
   }
 }
