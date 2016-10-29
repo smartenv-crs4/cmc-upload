@@ -7,8 +7,8 @@ const prefix = '/api/v1/';
 const request = supertest.agent(baseUrl);
 
 describe('--- Testing Upload ---', () => {
-  let testFile1 = { path: './test/logo_crs4.png', size:0, label:'F1'};
-  let testFile2 = { path: './test/logo_crs4_big.png', size:0, label:'F2'};
+  let testFile1 = { path: './test/resources/logo_crs4.png', size:0, label:'F1'};
+  let testFile2 = { path: './test/resources/logo_crs4_big.png', size:0, label:'F2'};
   let new_img = null;
 
   before((done) => {
@@ -42,35 +42,30 @@ describe('--- Testing Upload ---', () => {
   });
 
 
-/*
+
   describe('GET /file/:id', () => {
-    it('download the previously uploaded test image and check size', (done) => {
+    it('download one of the previously uploaded test images and check its size with the original', (done) => {
       request
         .get(prefix + 'file/' + new_img + '?tag=' + testFile1.label) 
         .expect('Content-Type', /stream/)
         .expect(200)
         .end((req,res) => {
           res.header.should.have.property('content-length');
-          res.header.content-length.should.be.equal(testFile1.size);
+          parseInt(res.header['content-length']).should.be.equal(testFile1.size);
           done();
         });
     });
   });
 
   describe('DELETE /file/:id', () => {
-    let new_desc = "Ristorante tipico nel supramonte di baunei";
-    it('respond with json Object containing the test doc updated', (done) => {
+    it('delete test images', (done) => {
       request
-        .put(prefix + 'contents/' + new_item + fakeuidpar)
-        .send({"description":new_desc})
-        .expect('Content-Type', /json/)
+        .delete(prefix + 'file/' + new_img)
         .expect(200)
         .end((req,res) => {
-          res.body.should.have.property("_id");
-          res.body.description.should.be.equal(new_desc);
           done();
         });
     });
   });
-*/
+
 });
