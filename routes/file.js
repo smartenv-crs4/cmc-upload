@@ -7,6 +7,21 @@ const config = require('config');
 const DriverStream = require('../drivers/base');
 const Driver = require('../drivers/' + config.driver).Driver;
 
+var auth = require('tokenmanager');
+var authField = config.security.decodedTokenFieldName;
+
+auth.configure(config.security)
+
+//authms middleware wrapper for dev environment (no authms required)
+function authWrap(req, res, next) {
+  if(req.app.get("env") != 'dev') 
+    auth.checkAuthorization(req, res, next);
+  next();
+}
+
+
+
+
 /**
  * @api {post} /file/ Store a new file on your remote storage system
  * @apiGroup Upload
@@ -23,7 +38,7 @@ const Driver = require('../drivers/' + config.driver).Driver;
  *       "failed": ["chunk1", "chunk2"]
  *     }
  */
-router.post('/file', (req, res, next) => { //TODO auth middleware
+router.post('/file', authWrap, (req, res, next) => { //TODO auth middleware
   let driver = new Driver();
   let newFile = {};
   let db = mongoConnection.get();
@@ -109,7 +124,7 @@ router.post('/file', (req, res, next) => { //TODO auth middleware
  *
  * @apiSuccess (200) {Stream} The file stream.
  */
-router.get('/file/:id', (req, res, next) => {
+router.get('/file/:id', authWrap, (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
   let tag = req.query.tag;
@@ -163,7 +178,7 @@ router.get('/file/:id', (req, res, next) => {
  *
  * @apiSuccess (200) The file is removed
  */
-router.delete('/file/:id', (req, res, next) => {
+router.delete('/file/:id', authWrap, (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
   let db = mongoConnection.get();

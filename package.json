@@ -23,6 +23,7 @@
     "mongodb": "^2.2.11",
     "morgan": "~1.7.0",
     "should": "^11.1.1",
-    "supertest": "^2.0.1"
+    "supertest": "^2.0.1",
+    "tokenmanager": "^1.0.24"
   }
 }

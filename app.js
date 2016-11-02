@@ -17,6 +17,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(boom());
 app.use(busboy({immediate:true, limits:{fileSize:config.sizeLimit}}));
 
+if (app.get('env') === 'dev') {
+  console.log("INFO: Development mode, skipping token checks"); 
+}
+
 //routes
 app.use(prefix + '/doc', express.static('doc',{root:'doc'}));
 app.use(prefix, file);
