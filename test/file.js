@@ -1,8 +1,8 @@
 const supertest = require('supertest');
 const should = require('should');
 const fs = require("fs");
-
-const baseUrl = "http://localhost:3010"; //TODO parametrizzare
+const port = process.env.PORT || 3000;
+const baseUrl = "http://localhost:" + port;
 const prefix = '/api/v1/';
 const request = supertest.agent(baseUrl);
 
@@ -14,7 +14,13 @@ describe('--- Testing Upload ---', () => {
   before((done) => {
     testFile1.size = fs.statSync(testFile1.path).size;
     testFile2.size = fs.statSync(testFile2.path).size;
-    done();
+
+    process.env.NODE_ENV='dev'; //WARNING testing in dev mode, no token check
+    require('../lib/init')((port) => {
+      console.log('Listening on port ' + port);
+      done();
+    });
+
   });
 
 
