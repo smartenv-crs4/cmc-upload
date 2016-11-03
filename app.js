@@ -10,15 +10,18 @@ const config = require('config');
 
 let prefix = '/api/v1'; //TODO gestire meglio
 
-app.use(logger('dev'));
+if(app.get('env') != 'test') {
+  app.use(logger('dev'));
+}
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(boom());
 app.use(busboy({immediate:true, limits:{fileSize:config.sizeLimit}}));
 
-if (app.get('env') === 'dev') {
-  console.log("INFO: Development mode, skipping token checks"); 
+if (app.get('env') === 'dev' || app.get('env') === 'test' ) {
+  app.set('nocheck', true);
+  console.log("INFO: Development/test mode, skipping token checks"); 
 }
 
 //routes

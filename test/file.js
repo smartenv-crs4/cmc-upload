@@ -6,6 +6,10 @@ const baseUrl = "http://localhost:" + port;
 const prefix = '/api/v1/';
 const request = supertest.agent(baseUrl);
 
+process.env.NODE_ENV='test'; //WARNING testing in test mode, no token check
+
+const init = require('../lib/init');
+
 describe('--- Testing Upload ---', () => {
   let testFile1 = { path: './test/resources/logo_crs4.png', size:0, label:'F1'};
   let testFile2 = { path: './test/resources/logo_crs4_big.png', size:0, label:'F2'};
@@ -15,17 +19,13 @@ describe('--- Testing Upload ---', () => {
     testFile1.size = fs.statSync(testFile1.path).size;
     testFile2.size = fs.statSync(testFile2.path).size;
 
-    process.env.NODE_ENV='dev'; //WARNING testing in dev mode, no token check
-    require('../lib/init')((port) => {
-      console.log('Listening on port ' + port);
-      done();
-    });
+    init.start(done());
 
   });
 
 
   after((done) => {
-    done();
+    init.stop(done());
   });
 
 

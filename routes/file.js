@@ -14,7 +14,7 @@ auth.configure(config.security)
 
 //authms middleware wrapper for dev environment (no authms required)
 function authWrap(req, res, next) {
-  if(req.app.get("env") != 'dev') 
+  if(!req.app.get("nocheck")) 
     auth.checkAuthorization(req, res, next);
   next();
 }
@@ -64,7 +64,7 @@ router.post('/file', authWrap, (req, res, next) => { //TODO auth middleware
       console.log(err);
       try {
         writeStream.close((file) => {
-          console.log('Removing file chunks from db');
+          req.app.logger('Removing file chunks from db');
           driver.remove(file.filecode);
         })
       }
@@ -210,7 +210,6 @@ function cleanup(driver, docs, cb) {
   Object.keys(docs).forEach(function(k, i) {
     if(k != '_id') { 
       try { 
-        console.log("Removing chunk " + docs[k].id);
         driver.remove(docs[k].id, (err) => {
           if(err) console.log(err);
           if(cb) cb(err);
