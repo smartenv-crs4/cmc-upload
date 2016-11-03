@@ -18,14 +18,12 @@ describe('--- Testing Upload ---', () => {
   before((done) => {
     testFile1.size = fs.statSync(testFile1.path).size;
     testFile2.size = fs.statSync(testFile2.path).size;
-
-    init.start(done());
-
+    init.start(() => {done()});
   });
 
 
   after((done) => {
-    init.stop(done());
+    init.stop(() => {done()});
   });
 
 
@@ -61,6 +59,15 @@ describe('--- Testing Upload ---', () => {
           done();
         });
     });
+    it('respond with not found error (404)', (done) => {
+      request
+        .get(prefix + 'file/fakeid/?tag=' + testFile1.label) 
+        .expect('Content-Type', /stream/)
+        .expect(404)
+        .end((req,res) => {
+          done();
+        });
+    });
   });
 
   describe('DELETE /file/:id', () => {
@@ -68,6 +75,14 @@ describe('--- Testing Upload ---', () => {
       request
         .delete(prefix + 'file/' + new_img)
         .expect(200)
+        .end((req,res) => {
+          done();
+        });
+    });
+    it('respond with not found error (404)', (done) => {
+      request
+        .delete(prefix + 'file/fakeid')
+        .expect(404)
         .end((req,res) => {
           done();
         });

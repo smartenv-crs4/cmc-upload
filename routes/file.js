@@ -186,20 +186,21 @@ router.delete('/file/:id', authWrap, (req, res, next) => {
     db.collection('files').findOne({_id:new mongo.ObjectId(id)}, (err, result) => {
       cleanup(driver, result, (err) => {
         if(err) {
-          console.log(err);
+ //         console.log(err);
           res.boom.badImplementation();
         }
         else {
           db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
             if(e) res.boom.badImplementation();
-            else res.end();
+            else if(r.nRemoved == 0) res.boom.notFound();
+            else res.end();            
           });
         }
       });
     });
   }
   catch(e) {
-    console.log(e);
+//    console.log(e);
     res.boom.badImplementation();
   }
 });
