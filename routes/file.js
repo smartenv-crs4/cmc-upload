@@ -3,7 +3,7 @@ const busboy = require('connect-busboy');
 const router = express.Router();
 const mongo = require('mongodb');
 const mongoConnection = require('../lib/db');
-const config = require('config');
+const config = require('propertiesmanager').conf;
 const DriverStream = require('../drivers/base');
 const Driver = require('../drivers/' + config.driver).Driver;
 

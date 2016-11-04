@@ -1,12 +1,13 @@
 {
-  "mongo": {
-    "url":"mongodb://localhost:27017/uploads"
-  },
-  "driver":"mongo",
-  "sizeLimit":1048576,
-  "security": {
-    "authoritationMicroserviceUrl": "http://156.148.36.184:3005",
-    "decodedTokenFieldName": "contentms",
-    "access_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoibXMiLCJpc3MiOiJub3QgdXNlZCBmbyBtcyIsImVtYWlsIjoibm90IHVzZWQgZm8gbXMiLCJ0eXBlIjoiYXV0aG1zIiwiZW5hYmxlZCI6dHJ1ZSwiZXhwIjoxNzkyMjM0MjYyOTAzfQ.tp79MBMuxZmiw7Tz5fyOVmfW91Pa3MsqoAww_0wF6FE"
+  "production": {
+    "port":3010,
+    "mongourl":"mongodb://localhost:27017/uploads",
+    "driver":"mongo",
+    "sizeLimit":1048576,
+    "security": {
+      "authoritationMicroserviceUrl": "http://156.148.36.184:3005",
+      "decodedTokenFieldName": "contentms",
+      "access_token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtb2RlIjoibXMiLCJpc3MiOiJub3QgdXNlZCBmbyBtcyIsImVtYWlsIjoibm90IHVzZWQgZm8gbXMiLCJ0eXBlIjoiYXV0aG1zIiwiZW5hYmxlZCI6dHJ1ZSwiZXhwIjoxNzkyMjM0MjYyOTAzfQ.tp79MBMuxZmiw7Tz5fyOVmfW91Pa3MsqoAww_0wF6FE"
+    }
   }
 }

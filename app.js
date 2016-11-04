@@ -6,7 +6,7 @@ const boom = require('express-boom');
 const busboy = require('connect-busboy');
 const app = express();
 const file = require('./routes/file');
-const config = require('config');
+const config = require('propertiesmanager').conf;
 
 let prefix = '/api/v1'; //TODO gestire meglio
 
