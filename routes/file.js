@@ -14,9 +14,9 @@ auth.configure(config.security)
 
 //authms middleware wrapper for dev environment (no authms required)
 function authWrap(req, res, next) {
-  if(!req.app.get("nocheck")) 
+  if(!req.app.get("nocheck"))
     auth.checkAuthorization(req, res, next);
-  next();
+  else next();
 }
 
 
@@ -38,7 +38,7 @@ function authWrap(req, res, next) {
  *       "failed": ["chunk1", "chunk2"]
  *     }
  */
-router.post('/file', authWrap, (req, res, next) => { //TODO auth middleware
+router.post('/file', authWrap, (req, res, next) => {
   let driver = new Driver();
   let newFile = {};
   let db = mongoConnection.get();
