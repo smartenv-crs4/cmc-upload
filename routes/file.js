@@ -131,12 +131,20 @@ router.get('/file/:id', authWrap, (req, res, next) => {
   let db = mongoConnection.get();
   if(!id) res.boom.badRequest('Missing file id');
   else {
-    db.collection('files').findOne({_id:new mongo.ObjectId(id)}, function(err, result) {
+    let oid = undefined;
+    try {
+      oid = new mongo.ObjectId(id);
+    }
+    catch(e) {
+      res.boom.badRequest('malformed resource id');
+      return;
+    }
+    db.collection('files').findOne({_id:oid}, function(err, result) {
       if(err) {
         res.boom.badImplementation();
         return;
       }
-      if(!result) {
+      if(result == null) {
         res.boom.notFound();
         return;
       }
@@ -183,19 +191,32 @@ router.delete('/file/:id', authWrap, (req, res, next) => {
   let id = req.params.id;
   let db = mongoConnection.get();
   try {
-    db.collection('files').findOne({_id:new mongo.ObjectId(id)}, (err, result) => {
-      cleanup(driver, result, (err) => {
-        if(err) {
- //         console.log(err);
-          res.boom.badImplementation();
+    let oid = undefined;
+    try { 
+      oid = new mongo.ObjectId(id)
+    }
+    catch(e) {
+      return res.boom.badRequest('malformed resource id');
+    }
+
+    db.collection('files').findOne({_id:oid}, (err, result) => {
+      if(err) {
+        console.log(err);
+        return res.boom.badImplementation();
+      }
+      if(result == null) {
+        return res.boom.notFound();
+      }
+      cleanup(driver, result, (error) => {
+        if(error) {
+          console.log("WARNING: unable to remove chunks");
+//          res.boom.badImplementation();
         }
-        else {
-          db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
-            if(e) res.boom.badImplementation();
-            else if(r.nRemoved == 0) res.boom.notFound();
-            else res.end();            
-          });
-        }
+        db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
+          if(e) res.boom.badImplementation();
+          else if(r.nRemoved == 0) res.boom.notFound();
+          else res.end();
+        });
       });
     });
   }

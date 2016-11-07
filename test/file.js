@@ -35,12 +35,15 @@ describe('--- Testing Upload ---', () => {
         .attach(testFile2.label, testFile2.path)
         .expect('Content-Type', /json/)
         .expect(200)
-        .end((req,res) => {
-          res.body.should.have.property("filecode");
-          new_img = res.body.filecode;
-          res.body.should.have.property("failed");
-          res.body.failed.length.should.be.equal(0);
-          done();
+        .end((err ,res) => {
+          if(err) done(err);
+          else {
+            res.body.should.have.property("filecode");
+            new_img = res.body.filecode;
+            res.body.should.have.property("failed");
+            res.body.failed.length.should.be.equal(0);
+            done();
+          }
         });
     });
   });
@@ -51,21 +54,23 @@ describe('--- Testing Upload ---', () => {
     it('download one of the previously uploaded test images and check its size with the original', (done) => {
       request
         .get(prefix + 'file/' + new_img + '?tag=' + testFile1.label) 
-        .expect('Content-Type', /stream/)
         .expect(200)
-        .end((req,res) => {
-          res.header.should.have.property('content-length');
-          parseInt(res.header['content-length']).should.be.equal(testFile1.size);
-          done();
+        .end((err, res) => {
+          if(err) done(err);
+          else { 
+            res.header.should.have.property('content-length');
+            parseInt(res.header['content-length']).should.be.equal(testFile1.size);
+            done();
+          }
         });
     });
     it('respond with not found error (404)', (done) => {
       request
-        .get(prefix + 'file/fakeid/?tag=' + testFile1.label) 
-        .expect('Content-Type', /stream/)
+        .get(prefix + 'file/aaaaaaaaaaaaaaaaaaaaaaaa/?tag=' + testFile1.label) 
         .expect(404)
-        .end((req,res) => {
-          done();
+        .end((err,res) => {
+          if(err) done(err);
+          else done();
         });
     });
   });
@@ -75,16 +80,27 @@ describe('--- Testing Upload ---', () => {
       request
         .delete(prefix + 'file/' + new_img)
         .expect(200)
-        .end((req,res) => {
-          done();
+        .end((err,res) => {
+          if(err) done(err);
+          else done();
+        });
+    });
+    it('respond with badRequest error (400) malformed resource id', (done) => {
+      request
+        .delete(prefix + 'file/fakeid')
+        .expect(400)
+        .end((err,res) => {
+          if(err) done(err);
+          else done();
         });
     });
     it('respond with not found error (404)', (done) => {
       request
-        .delete(prefix + 'file/fakeid')
+        .delete(prefix + 'file/aaaaaaaaaaaaaaaaaaaaaaaa')
         .expect(404)
-        .end((req,res) => {
-          done();
+        .end((err,res) => {
+          if(err) done(err);
+          else done();
         });
     });
   });
