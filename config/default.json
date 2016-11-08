@@ -1,7 +1,9 @@
 {
   "production": {
     "port":3010,
-    "mongourl":"mongodb://localhost:27017/uploads",
+    "dbHost":"localhost",
+    "dbPort":"27017",
+    "dbName":"uploads",
     "driver":"mongo",
     "sizeLimit":1048576,
     "security": {
