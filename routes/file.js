@@ -8,9 +8,13 @@ const DriverStream = require('../drivers/base');
 const Driver = require('../drivers/' + config.driver).Driver;
 
 var auth = require('tokenmanager');
-var authField = config.security.decodedTokenFieldName;
+var authField = config.decodedTokenFieldName;
 
-auth.configure(config.security)
+auth.configure({
+  authoritationMicroserviceUrl:config.authHost,
+  decodedTokenFieldName: authField,
+  access_token: config.access_token
+})
 
 //authms middleware wrapper for dev environment (no authms required)
 function authWrap(req, res, next) {
