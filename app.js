@@ -19,22 +19,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(boom());
 app.use(busboy({immediate:true, limits:{fileSize:config.sizeLimit}}));
 
-var allowCrossDomain = function(req, res, next)
-{
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, Accept, Content-Type, Authorization, Content-Length, X-Requested-With');
-  if ('OPTIONS' == req.method)
-  {
-    res.send(200);
-  }
-  else
-  {
-    next();
-  }
+if(config.enableCors === true) {
+  app.use(function(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, Accept, Content-Type, Authorization, Content-Length, X-Requested-With');
+    if ('OPTIONS' == req.method) res.send(200);
+    else next();
+  });
 }
-app.use(allowCrossDomain);
-
 
 if (app.get('env') === 'dev' || app.get('env') === 'test' ) {
   app.set('nocheck', true);
