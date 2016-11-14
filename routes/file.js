@@ -87,6 +87,7 @@ router.post('/file', authWrap, (req, res, next) => {
       else {
         newFile[fieldname] = storedFile;
       }
+
       if(streamCounter == 0 && Object.keys(newFile).length > 0) {
         db.collection('files').insertOne(newFile, (err, result) => {
           if(err) {
@@ -98,7 +99,8 @@ router.post('/file', authWrap, (req, res, next) => {
         });
       }
       else if(streamCounter == 0 && Object.keys(newFile).length == 0) {
-        res.boom.badImplementation();
+        if(file.truncated) res.boom.badRequest("Filesize limit exceeded (max: " + config.sizeLimit + "B)")
+        else res.boom.badImplementation();
       }
     });
   });
