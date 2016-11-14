@@ -36,9 +36,9 @@ class Driver {
     try {
       this.gfs.remove({_id:id}, (err) => {
         if(err) {
-          cb(err)
+          if(cb) cb(err)
         }
-        else cb();
+        else if(cb) cb();
       }); 
     }
     catch(e) {
@@ -50,9 +50,9 @@ class Driver {
     this.gfs.exist({_id:id}, function (err, found) {
       if(err) {
         console.log(err);
-        cb(err);
+        if(cb) cb(err);
       }
-      cb(undefined, found);
+      if(cb) cb(undefined, found);
     });
   }
 }

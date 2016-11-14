@@ -28,8 +28,6 @@ class BaseDriverStream extends EventEmitter {
 
   getStream() {return this.stream;}
 
-  close() {this.stream.close();}
-
   destroy() {this.stream.destroy();}
 
 }

@@ -66,22 +66,11 @@ router.post('/file', authWrap, (req, res, next) => {
 
     file.on('error', function(err) {
       console.log(err);
-      try {
-        writeStream.close((file) => {
-          req.app.logger('Removing file chunks from db');
-          driver.remove(file.filecode);
-        })
-      }
-      catch(e) {
-        console.log("WARNING: unable to remove chunk after upload failure")
-        console.log(e);
-      }
     });
 
     file.on('limit', function() {
       console.log("File size limit reached!");
       failed.push(fieldname);
-      writeStream.destroy();
     });
   
     writeStream.on('streamClose', (storedFile) => {
