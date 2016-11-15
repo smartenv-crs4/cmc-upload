@@ -14,19 +14,18 @@ describe('--- Testing Upload ---', () => {
   const config = require('../config/default.json');
   const maxFileSize = config.test ? config.test.sizeLimit : config.production.sizeLimit;
 
-  let testFile1 = { path: 'fake1', data: new Buffer(maxFileSize - 10), size: maxFileSize-10, label:'F1'};
-  let testFile2 = { path: 'fake2', data: new Buffer(maxFileSize - 10), size: maxFileSize-100, label:'F2'};
+  let testFile1     = { path: 'fake1', data: new Buffer(maxFileSize - 10), size: maxFileSize - 10,  label:'F1'};
+  let testFile2     = { path: 'fake2', data: new Buffer(maxFileSize - 10), size: maxFileSize - 100, label:'F2'};
+  let testOversize  = { path: 'fake3', data: new Buffer(maxFileSize + 10), size: maxFileSize + 10,  label:'Oversize'};
   let new_img = null;
 
   before((done) => {
     init.start(() => {done()});
   });
 
-
   after((done) => {
     init.stop(() => {done()});
   });
-
 
   describe('POST /file/', () => {
     it('respond with json Object containing the id of the stored resource', (done) => {
@@ -47,12 +46,9 @@ describe('--- Testing Upload ---', () => {
           }
         });
     });
-
     it('respond with 400 badRequest, filesize limit exceeded', (done) => {
-      const crypto = require('crypto');
-      const Readable = require('stream').Readable;
       request.post(prefix + 'file')
-        .attach("oversize",  new Buffer(maxFileSize + 10), "fakefile")
+        .attach(testOversize.label, testOversize.data, testOversize.path)
         .expect(400)
         .end((err ,res) => {
           if(err) done(err);
@@ -64,8 +60,6 @@ describe('--- Testing Upload ---', () => {
         });
     });
   });
-
-
 
   describe('GET /file/:id', () => {
     it('download one of the previously uploaded test file and check its size with the original', (done) => {
