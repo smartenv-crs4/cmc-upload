@@ -42,6 +42,12 @@ function authWrap(req, res, next) {
  *       "failed": ["chunk1", "chunk2"]
  *     }
  */
+console.prod = function(arg) {
+  if(process.env.NODE_ENV != 'test') {
+    console.log(arg);
+  }
+}
+
 router.post('/file', authWrap, (req, res, next) => {
   let driver = new Driver();
   let newFile = {};
@@ -57,7 +63,7 @@ router.post('/file', authWrap, (req, res, next) => {
 
     let writeStream = driver.newWriteStream(filename);
     if(!(writeStream instanceof DriverStream)) {
-      console.log("Invalid Driver stream, must be instance of BaseDriverStream, check your driver implementation");
+      console.prod("Invalid Driver stream, must be instance of BaseDriverStream, check your driver implementation");
       res.boom.badImplementation('Invalid storage driver');
       return;
     }
@@ -69,7 +75,7 @@ router.post('/file', authWrap, (req, res, next) => {
     });
 
     file.on('limit', function() {
-      console.log("File size limit reached!");
+      console.prod("File size limit reached!");
       failed.push(fieldname);
     });
   
@@ -77,7 +83,7 @@ router.post('/file', authWrap, (req, res, next) => {
       streamCounter--;
       if(file.truncated) {
         try {
-          console.log("Cleaning truncated chunk");
+          console.prod("Cleaning truncated chunk");
           driver.remove(storedFile.id); 
         } 
         catch(e) {
@@ -159,7 +165,7 @@ router.get('/file/:id', authWrap, (req, res, next) => {
       }
       let readStream = driver.newReadStream(result[tag].id);
       if(!(readStream instanceof DriverStream)) {
-        console.log("Invalid Driver stream, must be instance of DriverStream, check your driver implementation--");
+        console.prod("Invalid Driver stream, must be instance of DriverStream, check your driver implementation--");
         res.boom.badImplementation;
         return;
       }
@@ -205,7 +211,6 @@ router.delete('/file/:id', authWrap, (req, res, next) => {
       cleanup(driver, result, (error) => {
         if(error) {
           console.log("WARNING: unable to remove chunks");
-//          res.boom.badImplementation();
         }
         db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
           if(e) res.boom.badImplementation();
@@ -216,7 +221,6 @@ router.delete('/file/:id', authWrap, (req, res, next) => {
     });
   }
   catch(e) {
-//    console.log(e);
     res.boom.badImplementation();
   }
 });

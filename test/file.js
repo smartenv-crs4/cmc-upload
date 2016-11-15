@@ -11,13 +11,14 @@ process.env.NODE_ENV='test'; //WARNING testing in test mode, no token check
 const init = require('../lib/init');
 
 describe('--- Testing Upload ---', () => {
-  let testFile1 = { path: './test/resources/logo_crs4.png', size:0, label:'F1'};
-  let testFile2 = { path: './test/resources/logo_crs4_big.png', size:0, label:'F2'};
+  const config = require('../config/default.json');
+  const maxFileSize = config.test ? config.test.sizeLimit : config.production.sizeLimit;
+
+  let testFile1 = { path: 'fake1', data: new Buffer(maxFileSize - 10), size: maxFileSize-10, label:'F1'};
+  let testFile2 = { path: 'fake2', data: new Buffer(maxFileSize - 10), size: maxFileSize-100, label:'F2'};
   let new_img = null;
 
   before((done) => {
-    testFile1.size = fs.statSync(testFile1.path).size;
-    testFile2.size = fs.statSync(testFile2.path).size;
     init.start(() => {done()});
   });
 
@@ -31,8 +32,8 @@ describe('--- Testing Upload ---', () => {
     it('respond with json Object containing the id of the stored resource', (done) => {
       request
         .post( prefix + 'file')
-        .attach(testFile1.label, testFile1.path)
-        .attach(testFile2.label, testFile2.path)
+        .attach(testFile1.label, testFile1.data, testFile1.path)
+        .attach(testFile2.label, testFile2.data, testFile2.path)
         .expect('Content-Type', /json/)
         .expect(200)
         .end((err ,res) => {
@@ -46,12 +47,28 @@ describe('--- Testing Upload ---', () => {
           }
         });
     });
+
+    it('respond with 400 badRequest, filesize limit exceeded', (done) => {
+      const crypto = require('crypto');
+      const Readable = require('stream').Readable;
+      request.post(prefix + 'file')
+        .attach("oversize",  new Buffer(maxFileSize + 10), "fakefile")
+        .expect(400)
+        .end((err ,res) => {
+          if(err) done(err);
+          else {
+            res.body.should.have.property('message');
+            res.body.message.should.match(/limit/);
+            done();
+          }
+        });
+    });
   });
 
 
 
   describe('GET /file/:id', () => {
-    it('download one of the previously uploaded test images and check its size with the original', (done) => {
+    it('download one of the previously uploaded test file and check its size with the original', (done) => {
       request
         .get(prefix + 'file/' + new_img + '?tag=' + testFile1.label) 
         .expect(200)
@@ -76,7 +93,7 @@ describe('--- Testing Upload ---', () => {
   });
 
   describe('DELETE /file/:id', () => {
-    it('delete test images', (done) => {
+    it('delete test files', (done) => {
       request
         .delete(prefix + 'file/' + new_img)
         .expect(200)
