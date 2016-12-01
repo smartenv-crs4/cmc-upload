@@ -49,7 +49,7 @@ console.prod = function(arg) {
   }
 }
 
-router.get("/", authWrap, (req, res, next) => {res.json({ms:"CAPORT2020 Upload microservice", version:require('../package.json').version})});
+router.get("/", (req, res, next) => {res.json({ms:"CAPORT2020 Upload microservice", version:require('../package.json').version})});
 
 router.post('/file', authWrap, (req, res, next) => {
   let driver = new Driver();
@@ -242,11 +242,6 @@ function cleanup(driver, docs, cb) {
     }
   });
 }
-
-
-router.get('/version', function(req, res, next) {
-    res.json({version:version});
-});
 
 
 module.exports = router;
