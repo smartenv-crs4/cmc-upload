@@ -3,6 +3,7 @@ const busboy = require('connect-busboy');
 const router = express.Router();
 const mongo = require('mongodb');
 const mongoConnection = require('../lib/db');
+const version = require('../package.json').version;
 const config = require('propertiesmanager').conf;
 const DriverStream = require('../drivers/base');
 const Driver = require('../drivers/' + config.driver).Driver;
@@ -228,7 +229,6 @@ router.delete('/file/:id', authWrap, (req, res, next) => {
 });
 
 
-
 function cleanup(driver, docs, cb) {
   Object.keys(docs).forEach(function(k, i) {
     if(k != '_id') { 
@@ -243,6 +243,10 @@ function cleanup(driver, docs, cb) {
   });
 }
 
+
+router.get('/version', function(req, res, next) {
+    res.json({version:version});
+});
 
 
 module.exports = router;
