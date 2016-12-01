@@ -2,8 +2,7 @@ const supertest = require('supertest');
 const should = require('should');
 const fs = require("fs");
 const port = process.env.PORT || 3000;
-const baseUrl = "http://localhost:" + port;
-const prefix = '/api/v1/';
+const baseUrl = "http://localhost:" + port + "/";
 const request = supertest.agent(baseUrl);
 
 process.env.NODE_ENV='test'; //WARNING testing in test mode, no token check
@@ -27,10 +26,27 @@ describe('--- Testing Upload ---', () => {
     init.stop(() => {done()});
   });
 
+  describe('GET /', () => {
+    it('respond with json Object containing ms name and version ', (done) => {
+      request
+        .get('')
+        .expect(200)
+        .end((err,res) => {
+          if(err) done(err);
+          else {
+            res.body.should.have.property("ms");
+            res.body.should.have.property("version");
+            done();
+          }
+        });
+    });
+  });
+
+
   describe('POST /file/', () => {
     it('respond with json Object containing the id of the stored resource', (done) => {
       request
-        .post( prefix + 'file')
+        .post( 'file')
         .attach(testFile1.label, testFile1.data, testFile1.path)
         .attach(testFile2.label, testFile2.data, testFile2.path)
         .expect('Content-Type', /json/)
@@ -47,7 +63,7 @@ describe('--- Testing Upload ---', () => {
         });
     });
     it('respond with 400 badRequest, filesize limit exceeded', (done) => {
-      request.post(prefix + 'file')
+      request.post('file')
         .attach(testOversize.label, testOversize.data, testOversize.path)
         .expect(400)
         .end((err ,res) => {
@@ -64,7 +80,7 @@ describe('--- Testing Upload ---', () => {
   describe('GET /file/:id', () => {
     it('download one of the previously uploaded test file and check its size with the original', (done) => {
       request
-        .get(prefix + 'file/' + new_img + '?tag=' + testFile1.label) 
+        .get('file/' + new_img + '?tag=' + testFile1.label) 
         .expect(200)
         .end((err, res) => {
           if(err) done(err);
@@ -77,7 +93,7 @@ describe('--- Testing Upload ---', () => {
     });
     it('respond with not found error (404)', (done) => {
       request
-        .get(prefix + 'file/aaaaaaaaaaaaaaaaaaaaaaaa/?tag=' + testFile1.label) 
+        .get('file/aaaaaaaaaaaaaaaaaaaaaaaa/?tag=' + testFile1.label) 
         .expect(404)
         .end((err,res) => {
           if(err) done(err);
@@ -89,7 +105,7 @@ describe('--- Testing Upload ---', () => {
   describe('DELETE /file/:id', () => {
     it('delete test files', (done) => {
       request
-        .delete(prefix + 'file/' + new_img)
+        .delete('file/' + new_img)
         .expect(200)
         .end((err,res) => {
           if(err) done(err);
@@ -98,7 +114,7 @@ describe('--- Testing Upload ---', () => {
     });
     it('respond with badRequest error (400) malformed resource id', (done) => {
       request
-        .delete(prefix + 'file/fakeid')
+        .delete('file/fakeid')
         .expect(400)
         .end((err,res) => {
           if(err) done(err);
@@ -107,7 +123,7 @@ describe('--- Testing Upload ---', () => {
     });
     it('respond with not found error (404)', (done) => {
       request
-        .delete(prefix + 'file/aaaaaaaaaaaaaaaaaaaaaaaa')
+        .delete('file/aaaaaaaaaaaaaaaaaaaaaaaa')
         .expect(404)
         .end((err,res) => {
           if(err) done(err);

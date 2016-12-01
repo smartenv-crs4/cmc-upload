@@ -8,8 +8,6 @@ const app = express();
 const file = require('./routes/file');
 const config = require('propertiesmanager').conf;
 
-let prefix = '/api/v1'; //TODO gestire meglio
-
 if(app.get('env') != 'test') {
   app.use(logger('dev'));
 }
@@ -35,8 +33,8 @@ if (app.get('env') === 'dev' || app.get('env') === 'test' ) {
 }
 
 //routes
-app.use(prefix + '/doc', express.static('doc',{root:'doc'}));
-app.use(prefix, file);
+app.use('/doc', express.static('doc',{root:'doc'}));
+app.use('/', file);
 
 
 // catch 404 and forward to error handler
