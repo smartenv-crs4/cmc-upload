@@ -9,8 +9,10 @@
     "enableCors":true,
     "authProtocol":"http",
     "authHost":"your_auth_service_host",
-    "authPort":"3000",
-    "decodedTokenFieldName": "mailerms",
-    "auth_token":"your_auth_service_token"
+    "authPort":"80",
+    "apiGwAuthBaseUrl":"/api/auth",
+    "apiVersion":"v1",
+    "auth_token":"your_auth_service_token",
+    "decodedTokenFieldName": "uploadms"
   }
 }
