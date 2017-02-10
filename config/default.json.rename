@@ -1,6 +1,5 @@
 {
   "production": {
-    "port":3010,
     "dbHost":"your_db_host",
     "dbPort":"27017",
     "dbName":"uploads",
