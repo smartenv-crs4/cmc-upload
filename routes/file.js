@@ -16,7 +16,7 @@ var gwBase=_.isEmpty(config.apiGwAuthBaseUrl) ? "" : config.apiGwAuthBaseUrl;
 gwBase=_.isEmpty(config.apiVersion) ? gwBase : gwBase + "/" + config.apiVersion;
 
 auth.configure({
-  authoritationMicroserviceUrl:config.authProtocol + "://" + config.authHost + ":" + config.authPort + gwBase,
+  authorizationMicroserviceUrl:config.authProtocol + "://" + config.authHost + ":" + config.authPort + gwBase,
   decodedTokenFieldName: authField,
   access_token: config.auth_token
 })
