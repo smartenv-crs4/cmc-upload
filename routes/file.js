@@ -61,62 +61,67 @@ router.post('/file', authWrap, (req, res, next) => {
   let db = mongoConnection.get();
   let streamCounter = 0;
   let failed = []
-  req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
- 
-    if (!filename) {
-      res.boom.badRequest("missing file");
-      return;
-    }
-
-    let writeStream = driver.newWriteStream(filename);
-    if(!(writeStream instanceof DriverStream)) {
-      console.prod("Invalid Driver stream, must be instance of BaseDriverStream, check your driver implementation");
-      res.boom.badImplementation('Invalid storage driver');
-      return;
-    }
-    streamCounter++;
-    file.pipe(writeStream.getStream());
-
-    file.on('error', function(err) {
-      console.log(err);
-    });
-
-    file.on('limit', function() {
-      console.prod("File size limit reached!");
-      failed.push(fieldname);
-    });
-  
-    writeStream.on('streamClose', (storedFile) => {
-      streamCounter--;
-      if(file.truncated) {
-        try {
-          console.prod("Cleaning truncated chunk");
-          driver.remove(storedFile.id); 
-        } 
-        catch(e) {
-          console.log(e);
-        }
-      }
-      else {
-        newFile[fieldname] = storedFile;
+  try {
+    req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+   
+      if (!filename) {
+        res.boom.badRequest("missing file");
+        return;
       }
 
-      if(streamCounter == 0 && Object.keys(newFile).length > 0) {
-        db.collection('files').insertOne(newFile, (err, result) => {
-          if(err) {
-            console.log(err);
-            cleanup(driver, newFile);
-            res.boom.badImplementation();
+      let writeStream = driver.newWriteStream(filename);
+      if(!(writeStream instanceof DriverStream)) {
+        console.prod("Invalid Driver stream, must be instance of BaseDriverStream, check your driver implementation");
+        res.boom.badImplementation('Invalid storage driver');
+        return;
+      }
+      streamCounter++;
+      file.pipe(writeStream.getStream());
+
+      file.on('error', function(err) {
+        console.log(err);
+      });
+
+      file.on('limit', function() {
+        console.prod("File size limit reached!");
+        failed.push(fieldname);
+      });
+    
+      writeStream.on('streamClose', (storedFile) => {
+        streamCounter--;
+        if(file.truncated) {
+          try {
+            console.prod("Cleaning truncated chunk");
+            driver.remove(storedFile.id); 
+          } 
+          catch(e) {
+            console.log(e);
           }
-          else res.json({filecode:result.insertedId, failed:failed});
-        });
-      }
-      else if(streamCounter == 0 && Object.keys(newFile).length == 0) {
-        if(file.truncated) res.boom.badRequest("Filesize limit exceeded (max: " + config.sizeLimit + "B)")
-        else res.boom.badImplementation();
-      }
+        }
+        else {
+          newFile[fieldname] = storedFile;
+        }
+
+        if(streamCounter == 0 && Object.keys(newFile).length > 0) {
+          db.collection('files').insertOne(newFile, (err, result) => {
+            if(err) {
+              console.log(err);
+              cleanup(driver, newFile);
+              res.boom.badImplementation();
+            }
+            else res.json({filecode:result.insertedId, failed:failed});
+          });
+        }
+        else if(streamCounter == 0 && Object.keys(newFile).length == 0) {
+          if(file.truncated) res.boom.badRequest("Filesize limit exceeded (max: " + config.sizeLimit + "B)")
+          else res.boom.badImplementation();
+        }
+      });
     });
-  });
+  } catch(e) {
+    console.log(e);
+    res.boom.badImplementation();
+  }
 });
 
 
