@@ -15,7 +15,6 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(boom());
-app.use(busboy({immediate:true, limits:{fileSize:config.sizeLimit}}));
 
 if(config.enableCors === true) {
   app.use(function(req, res, next) {

@@ -55,7 +55,7 @@ console.prod = function(arg) {
 
 router.get("/", (req, res, next) => {res.json({ms:"CAPORT2020 Upload microservice", version:require('../package.json').version})});
 
-router.post('/file', authWrap, (req, res, next) => {
+router.post('/file', [authWrap, busboy({immediate:true, limits:{fileSize:config.sizeLimit}})], (req, res, next) => {
   let driver = new Driver();
   let newFile = {};
   let db = mongoConnection.get();
