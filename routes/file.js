@@ -109,7 +109,13 @@ router.post('/file', [authWrap, busboy({immediate:true, limits:{fileSize:config.
               cleanup(driver, newFile);
               res.boom.badImplementation();
             }
-            else res.json({filecode:result.insertedId, failed:failed});
+            else {
+              let sum = 0;
+              Object.keys(newFile).forEach((k,i) => {
+                if(k != '_id') sum += newFile[k].size;
+              });
+              res.json({filecode:result.insertedId, failed:failed, size:sum});
+            }
           });
         }
         else if(streamCounter == 0 && Object.keys(newFile).length == 0) {

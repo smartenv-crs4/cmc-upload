@@ -14,7 +14,7 @@ describe('--- Testing Upload ---', () => {
   const maxFileSize = config.test ? config.test.sizeLimit : config.production.sizeLimit;
 
   let testFile1     = { path: 'fake1', data: new Buffer(maxFileSize - 10), size: maxFileSize - 10,  label:'F1'};
-  let testFile2     = { path: 'fake2', data: new Buffer(maxFileSize - 10), size: maxFileSize - 100, label:'F2'};
+  let testFile2     = { path: 'fake2', data: new Buffer(maxFileSize - 100), size: maxFileSize - 100, label:'F2'};
   let testOversize  = { path: 'fake3', data: new Buffer(maxFileSize + 10), size: maxFileSize + 10,  label:'Oversize'};
   let new_img = null;
 
@@ -58,6 +58,7 @@ describe('--- Testing Upload ---', () => {
             new_img = res.body.filecode;
             res.body.should.have.property("failed");
             res.body.failed.length.should.be.equal(0);
+            res.body.size.should.be.equal(testFile1.size + testFile2.size);
             done();
           }
         });
