@@ -7,6 +7,7 @@ const version = require('../package.json').version;
 const config = require('propertiesmanager').conf;
 const DriverStream = require('../drivers/base');
 const Driver = require('../drivers/' + config.driver).Driver;
+const security = require('../middleware/security');
 var _=require('underscore');
 
 var auth = require('tokenmanager');
@@ -20,15 +21,6 @@ auth.configure({
   decodedTokenFieldName: authField,
   authorizationMicroserviceToken: config.auth_token
 })
-
-//authms middleware wrapper for dev environment (no authms required)
-function authWrap(req, res, next) {
-  if(!req.app.get("nocheck"))
-    auth.checkAuthorization(req, res, next);
-  else next();
-}
-
-
 
 
 /**
@@ -55,7 +47,7 @@ console.prod = function(arg) {
 
 router.get("/", (req, res, next) => {res.json({ms:"CAPORT2020 Upload microservice", version:require('../package.json').version})});
 
-router.post('/file', [authWrap, busboy({immediate:true, limits:{fileSize:config.sizeLimit}})], (req, res, next) => {
+router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSize:config.sizeLimit}})], (req, res, next) => {
   let driver = new Driver();
   let newFile = {};
   let db = mongoConnection.get();
@@ -143,7 +135,7 @@ router.post('/file', [authWrap, busboy({immediate:true, limits:{fileSize:config.
  *
  * @apiSuccess (200) {Stream} The file stream.
  */
-router.get('/file/:id', authWrap, (req, res, next) => {
+router.get('/file/:id', security.authWrap, (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
   let tag = req.query.tag;
@@ -205,7 +197,7 @@ router.get('/file/:id', authWrap, (req, res, next) => {
  *
  * @apiSuccess (200) The file is removed
  */
-router.delete('/file/:id', authWrap, (req, res, next) => {
+router.delete('/file/:id', security.authWrap, (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
   let db = mongoConnection.get();
