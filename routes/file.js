@@ -31,7 +31,7 @@ auth.configure({
  *                 Multiple file field in the same request are stored as a sigle resource, each chunk is identified by the 
  *                 fieldname attribute of the multipart field, that should be passed to the GET method to retrieve the chunk.
  *
- * @apiSuccess (200) {Object} body A Json containig the stored resource id and, an array containing failed uploads fieldname, if any.
+ * @apiSuccess (200) {Object} body A Json containing the stored resource id and, an array containing failed uploads fieldname, if any.
  * @apiSuccessExample Success-Response:
  *     HTTP/1.1 200 OK
  *     {
@@ -133,7 +133,7 @@ router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSiz
  * @apiParam  {String} id   The unique identifier of the resource
  * @apiParam  {String} tag  The identifier of the requested chunk, if missing first the one found is returned
  *
- * @apiSuccess (200) {Stream} The file stream.
+ * @apiSuccess (200) {Stream} body  The file stream
  */
 router.get('/file/:id', security.authWrap, (req, res, next) => {
   let driver = new Driver();
@@ -195,7 +195,7 @@ router.get('/file/:id', security.authWrap, (req, res, next) => {
  *                  are deleted too.
  * @apiParam  {String} id   The unique identifier of the resource
  *
- * @apiSuccess (200) The file is removed
+ * @apiSuccess (200) body   The file is removed
  */
 router.delete('/file/:id', security.authWrap, (req, res, next) => {
   let driver = new Driver();
