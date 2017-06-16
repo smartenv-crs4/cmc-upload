@@ -47,6 +47,17 @@ console.prod = function(arg) {
 
 router.get("/", (req, res, next) => {res.json({ms:"CAPORT2020 Upload microservice", version:require('../package.json').version})});
 
+/* GET environment info page. */
+router.get('/env', function(req, res) {
+    var env;
+    if (process.env['NODE_ENV'] === 'dev')
+        env='dev';
+    else
+        env='production';
+
+    res.status(200).send({env:env});
+});
+
 router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSize:config.sizeLimit}})], (req, res, next) => {
   let driver = new Driver();
   let newFile = {};
