@@ -1,3 +1,25 @@
+/*
+ ############################################################################
+ ############################### GPL III ####################################
+ ############################################################################
+ *                         Copyright 2017 CRS4                                 *
+ *    This file is part of CRS4 Microservice Core - Upload (CMC-Upload).      *
+ *                                                                            *
+ *     CMC-Upload is free software: you can redistribute it and/or modify     *
+ *     it under the terms of the GNU General Public License as published by   *
+ *       the Free Software Foundation, either version 3 of the License, or    *
+ *                    (at your option) any later version.                     *
+ *                                                                            *
+ *     CMC-Upload is distributed in the hope that it will be useful,          *
+ *      but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        *
+ *               GNU General Public License for more details.                 *
+ *                                                                            *
+ *     You should have received a copy of the GNU General Public License      *
+ *    along with CMC-Upload.  If not, see <http://www.gnu.org/licenses/>.    *
+ * ############################################################################
+ */
+
 const express = require('express');
 const busboy = require('connect-busboy');
 const router = express.Router();
@@ -13,11 +35,8 @@ var _=require('underscore');
 var auth = require('tokenmanager');
 var authField = config.decodedTokenFieldName;
 
-var gwBase=_.isEmpty(config.apiGwAuthBaseUrl) ? "" : config.apiGwAuthBaseUrl;
-gwBase=_.isEmpty(config.apiVersion) ? gwBase : gwBase + "/" + config.apiVersion;
-
 auth.configure({
-  authorizationMicroserviceUrl:config.authProtocol + "://" + config.authHost + ":" + config.authPort + gwBase + '/tokenactions/checkiftokenisauth',
+  authorizationMicroserviceUrl:config.authUrl + '/tokenactions/checkiftokenisauth',
   decodedTokenFieldName: authField,
   authorizationMicroserviceToken: config.auth_token
 })
@@ -45,7 +64,7 @@ console.prod = function(arg) {
   }
 }
 
-router.get("/", (req, res, next) => {res.json({ms:"CAPORT2020 Upload microservice", version:require('../package.json').version})});
+router.get("/", (req, res, next) => {res.json({ms:"Crs4 Microservice Core(CMC) Upload microservice", version:require('../package.json').version})});
 
 /* GET environment info page. */
 router.get('/env', function(req, res) {
