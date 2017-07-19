@@ -1,45 +1,44 @@
-#CMC Upload Microservice Development
+#CMC Upload Microservice
+CMC Upload is the file management microservice of the CMC (Crs4 Microservice Core) framework.
+It takes care of managing file upload in your application. <br>
+For API reference, see the service auto-generated online documentation at <code>http://service_base_url/doc</code>.
 
-##Installing
+##Usage
 
-###1) Install Mocha (for testing):
+###Install
+
+####1) Install Mocha (for testing):
 
     sudo npm install -g mocha
 
-###2) Install apiDoc (for API docs):
+####2) Install apiDoc (for API documentation):
 
     sudo npm install -g apidoc
 
-###3) Install all dependencies
+####3) Install all dependencies
     
     npm install
 
 
-##Running Tests
+###Run test suite
 
     npm test
     
 
-##Generating API documentation
+###Generate API documentation
 
     apidoc -i ./routes -o apidoc
+    
 
+###Run the application
 
-##Running Application
+####For *development* mode, run:
 
-In *development* mode, run (Application run as open API without token authentication):
+    NODE_ENV=dev npm start
 
-    $ NODE_ENV=dev npm start
-    OR
-    $ NODE_ENV=dev PORT=3000 npm start    
+####For *production* mode, run:
 
-In production mode, run:
-
-    $ npm start
-    OR
-    $ PORT=3000 npm start    
+    npm start
       
 
-To Run Application as open API without token authentication (recommended only for test)
-
-    $ PORT=3000 NODE_ENV=dev npm start
+*Development* mode runs the service open API without token authentication (recommended only for test purposes).

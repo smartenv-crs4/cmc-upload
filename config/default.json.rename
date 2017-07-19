@@ -2,7 +2,7 @@
   "production": {
     "dbHost":"localhost",
     "dbPort":"27017",
-    "dbName":"uploads",
+    "dbName":"CMCUPLOAD",
     "driver":"mongo",
     "sizeLimit":1048576,
     "enableCors":true,

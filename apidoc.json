@@ -1,8 +1,6 @@
 {
-  "name": "Crs4 Microservice Core(CMC) Upload API",
-  "title": "CMCUploadAPI",
-  "version": "0.1.0",
-  "description": "APIs to handle files and images upload",
+  "name": "CMC (CRS4 Microservice Core) Upload API",
+  "description": "APIs to handle upload of files and images",
   "url": "http://smartapi.crs4.it/api/upload/v1",
   "header": {
     "title": "API Overview",
