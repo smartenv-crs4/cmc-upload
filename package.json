@@ -20,7 +20,11 @@
     "propertiesmanager": "^2.0.2",
     "should": "^11.1.1",
     "supertest": "^2.0.1",
+<<<<<<< HEAD
+    "tokenmanager": "^1.0.24",
+=======
     "tokenmanager": "^3.1.0",
+>>>>>>> 8ad0c425ce4184b967ddcbd5e123d0160eabf990
     "underscore": "^1.8.3"
   }
 }
