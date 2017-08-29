@@ -6,15 +6,8 @@
     "driver":"mongo",
     "sizeLimit":1048576,
     "enableCors":true,
-<<<<<<< HEAD
-    "authProtocol":"http",
-    "authHost":"your_auth_service_host",
-    "authPort":"3000",
-    "apiGwAuthBaseUrl":"",
     "apiVersion":"",
-=======
     "authUrl":"your_auth_service_URL",
->>>>>>> 8ad0c425ce4184b967ddcbd5e123d0160eabf990
     "auth_token":"your_auth_service_token",
     "decodedTokenFieldName": "uploadms"
   }

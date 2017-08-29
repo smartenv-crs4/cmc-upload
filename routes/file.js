@@ -39,11 +39,7 @@ var gwBase=_.isEmpty(config.apiGwAuthBaseUrl) ? "" : config.apiGwAuthBaseUrl;
 gwBase=_.isEmpty(config.apiVersion) ? gwBase : gwBase + "/" + config.apiVersion;
 
 auth.configure({
-<<<<<<< HEAD
-  authorizationMicroserviceUrl:config.authProtocol + "://" + config.authHost + ":" + config.authPort + gwBase + '/tokenactions/checkiftokenisauth',
-=======
   authorizationMicroserviceUrl:config.authUrl + '/tokenactions/checkiftokenisauth',
->>>>>>> 8ad0c425ce4184b967ddcbd5e123d0160eabf990
   decodedTokenFieldName: authField,
   authorizationMicroserviceToken: config.auth_token
 })
@@ -80,13 +76,9 @@ router.get('/env', function(req, res) {
         env='dev';
     else
         env='production';
-
-<<<<<<< HEAD
-=======
     res.status(200).send({env:env});
 });
 
->>>>>>> 8ad0c425ce4184b967ddcbd5e123d0160eabf990
 router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSize:config.sizeLimit}})], (req, res, next) => {
   let driver = new Driver();
   let newFile = {};
