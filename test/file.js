@@ -40,6 +40,7 @@ describe('--- Testing Upload ---', () => {
   let testFile2     = { path: 'fake2', data: new Buffer(maxFileSize - 100), size: maxFileSize - 100, label:'F2'};
   let testOversize  = { path: 'fake3', data: new Buffer(maxFileSize + 10), size: maxFileSize + 10,  label:'Oversize'};
   let new_img = null;
+  let fakeuidpar = "?fakeuid=a1a1a1a1a1a1a1a1a1a1a1a1"
 
   before((done) => {
     init.start(() => {done()});
@@ -69,7 +70,7 @@ describe('--- Testing Upload ---', () => {
   describe('POST /file/', () => {
     it('respond with json Object containing the id of the stored resource', (done) => {
       request
-        .post( 'file')
+        .post( 'file' + fakeuidpar)
         .attach(testFile1.label, testFile1.data, testFile1.path)
         .attach(testFile2.label, testFile2.data, testFile2.path)
         .expect('Content-Type', /json/)
@@ -87,7 +88,7 @@ describe('--- Testing Upload ---', () => {
         });
     });
     it('respond with 400 badRequest, filesize limit exceeded', (done) => {
-      request.post('file')
+      request.post('file' + fakeuidpar)
         .attach(testOversize.label, testOversize.data, testOversize.path)
         .expect(400)
         .end((err ,res) => {
@@ -127,9 +128,18 @@ describe('--- Testing Upload ---', () => {
   });
 
   describe('DELETE /file/:id', () => {
+    it('delete test files with not being the owner', (done) => {
+      request
+        .delete('file/' + new_img + "?fakeuid=a2a2a2a2a2a2a2a2a2a2a2a2")
+        .expect(401)
+        .end((err,res) => {
+          if(err) done(err);
+          else done();
+        });
+    });
     it('delete test files', (done) => {
       request
-        .delete('file/' + new_img)
+        .delete('file/' + new_img + fakeuidpar)
         .expect(200)
         .end((err,res) => {
           if(err) done(err);
@@ -138,7 +148,7 @@ describe('--- Testing Upload ---', () => {
     });
     it('respond with badRequest error (400) malformed resource id', (done) => {
       request
-        .delete('file/fakeid')
+        .delete('file/fakeid' + fakeuidpar)
         .expect(400)
         .end((err,res) => {
           if(err) done(err);
@@ -147,7 +157,7 @@ describe('--- Testing Upload ---', () => {
     });
     it('respond with not found error (404)', (done) => {
       request
-        .delete('file/aaaaaaaaaaaaaaaaaaaaaaaa')
+        .delete('file/aaaaaaaaaaaaaaaaaaaaaaaa' + fakeuidpar)
         .expect(404)
         .end((err,res) => {
           if(err) done(err);

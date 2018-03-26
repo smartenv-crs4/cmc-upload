@@ -30,6 +30,7 @@ const config = require('propertiesmanager').conf;
 const DriverStream = require('../drivers/base');
 const Driver = require('../drivers/' + config.driver).Driver;
 const security = require('../middleware/security');
+const rp = require("request-promise");
 var _=require('underscore');
 
 var auth = require('tokenmanager');
@@ -85,6 +86,7 @@ router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSiz
   let db = mongoConnection.get();
   let streamCounter = 0;
   let failed = []
+  let owner = req[authField].token._id;
   try {
     req.busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
    
@@ -124,6 +126,7 @@ router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSiz
         }
         else {
           newFile[fieldname] = storedFile;
+          newFile.owner = owner;
         }
 
         if(streamCounter == 0 && Object.keys(newFile).length > 0) {
@@ -136,7 +139,7 @@ router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSiz
             else {
               let sum = 0;
               Object.keys(newFile).forEach((k,i) => {
-                if(k != '_id') sum += newFile[k].size;
+                if(k != '_id' && k != 'owner') sum += newFile[k].size;
               });
               res.json({filecode:result.insertedId, failed:failed, size:sum});
             }
@@ -167,7 +170,7 @@ router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSiz
  *
  * @apiSuccess (200) {Stream} body  The file stream
  */
-router.get('/file/:id', security.authWrap, (req, res, next) => {
+router.get('/file/:id', (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
   let tag = req.query.tag;
@@ -195,7 +198,7 @@ router.get('/file/:id', security.authWrap, (req, res, next) => {
       if(!tag || tag.length == 0) {
         let keys = Object.keys(result);
         for(let i=0; i<keys.length;i++) {
-          if(keys[i] != '_id') {
+          if(keys[i] !=  '_id' && keys[i] != 'owner') {
             tag = keys[i];
             break;
           }
@@ -224,14 +227,17 @@ router.get('/file/:id', security.authWrap, (req, res, next) => {
  *
  * @apiDescription  Deletes the resource identified by <i>id</i>. 
  *                  All the associated chunks (multipart multi file)
- *                  are deleted too.
+ *                  are deleted too. Only the owner of the resource or a system admin 
+ *                  are authorized to delete a resource.
  * @apiParam  {String} id   The unique identifier of the resource
+ * @apiParam  {String} access_token A valid CMC token for the owner or admin
  *
  * @apiSuccess (200) body   The file is removed
  */
 router.delete('/file/:id', security.authWrap, (req, res, next) => {
   let driver = new Driver();
   let id = req.params.id;
+  let uid = req[authField].token._id;
   let db = mongoConnection.get();
   try {
     let oid = undefined;
@@ -250,15 +256,20 @@ router.delete('/file/:id', security.authWrap, (req, res, next) => {
       if(result == null) {
         return res.boom.notFound();
       }
-      cleanup(driver, result, (error) => {
-        if(error) {
-          console.log("WARNING: unable to remove chunks");
+      getAdminTypes(admtypes => {
+        if((result.owner && uid == result.owner) || admtypes.indexOf(req[authField].token.type) != -1) {//owner or Admin
+          cleanup(driver, result, (error) => {
+            if(error) {
+              console.log("WARNING: unable to remove chunks");
+            }
+            db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
+              if(e) res.boom.badImplementation();
+              else if(r.nRemoved == 0) res.boom.notFound();
+              else res.end();
+            });
+          });
         }
-        db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
-          if(e) res.boom.badImplementation();
-          else if(r.nRemoved == 0) res.boom.notFound();
-          else res.end();
-        });
+        else res.boom.unauthorized()
       });
     });
   }
@@ -268,9 +279,26 @@ router.delete('/file/:id', security.authWrap, (req, res, next) => {
 });
 
 
+function getAdminTypes(cb) {
+  var rqparams = {
+    method: "GET",
+    url:  config.authUrl + "/tokenactions/getsupeusertokenlist",
+    headers: {'Authorization': "Bearer " + (config.auth_token || "")},
+  };
+  rp(rqparams)
+  .then(r => {
+    if(cb) cb(r.superuser || [])
+  })
+  .catch(e => {
+    console.log(e)
+    if(cb) cb([]);
+  })
+}
+
+
 function cleanup(driver, docs, cb) {
   Object.keys(docs).forEach(function(k, i) {
-    if(k != '_id') { 
+    if(k != '_id' && k != 'owner') { 
       try { 
         driver.remove(docs[k].id, (err) => {
           if(err) console.log(err);
