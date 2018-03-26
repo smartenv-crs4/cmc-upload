@@ -239,15 +239,16 @@ router.delete('/file/:id', security.authWrap, (req, res, next) => {
   let id = req.params.id;
   let uid = req[authField].token._id;
   let db = mongoConnection.get();
-  try {
-    let oid = undefined;
-    try { 
-      oid = new mongo.ObjectId(id)
-    }
-    catch(e) {
-      return res.boom.badRequest('malformed resource id');
-    }
+  
+  let oid = undefined;
+  try { 
+    oid = new mongo.ObjectId(id)
+  }
+  catch(e) {    
+    return res.boom.badRequest('malformed resource id');
+  }
 
+  try {
     db.collection('files').findOne({_id:oid}, (err, result) => {
       if(err) {
         console.log(err);
@@ -263,13 +264,17 @@ router.delete('/file/:id', security.authWrap, (req, res, next) => {
               console.log("WARNING: unable to remove chunks");
             }
             db.collection('files').remove({_id:new mongo.ObjectId(id)}, (e, r) => {
-              if(e) res.boom.badImplementation();
-              else if(r.nRemoved == 0) res.boom.notFound();
-              else res.end();
+              if(e) {
+                return res.boom.badImplementation();
+              }
+              else if(r.nRemoved == 0) {
+                return res.boom.notFound();
+              }
+              else return res.json({filecode: id});
             });
           });
         }
-        else res.boom.unauthorized()
+        else res.boom.unauthorized();
       });
     });
   }
@@ -297,17 +302,19 @@ function getAdminTypes(cb) {
 
 
 function cleanup(driver, docs, cb) {
+  let pArr = [];
   Object.keys(docs).forEach(function(k, i) {
     if(k != '_id' && k != 'owner') { 
-      try { 
-        driver.remove(docs[k].id, (err) => {
-          if(err) console.log(err);
-          if(cb) cb(err);
-        }); 
-      } 
-      catch(e) {console.log(e);} 
+      pArr.push(driver.remove(docs[k].id)); 
     }
   });
+  Promise.all(pArr)
+  .then((r) => {
+    if(cb) cb()
+  })
+  .catch(e => {
+    cb(e)
+  })
 }
 
 

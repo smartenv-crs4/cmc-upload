@@ -54,18 +54,20 @@ class Driver {
     return new DriverStream(this.gfs.createReadStream({_id: id}));
   }
 
-  remove(id, cb) {
-    try {
-      this.gfs.remove({_id:id}, (err) => {
-        if(err) {
-          if(cb) cb(err)
-        }
-        else if(cb) cb();
-      }); 
-    }
-    catch(e) {
-      console.log(e); 
-    }
+  remove(id) {
+    return new Promise((resolve, reject) => {
+      try {
+        this.gfs.remove({_id:id}, (err) => {
+          if(err) {
+            reject(err)
+          }
+          else resolve(id);
+        }); 
+      }
+      catch(e) {
+        reject(e); 
+      }
+    });
   }
 
   exists(id, cb) {
