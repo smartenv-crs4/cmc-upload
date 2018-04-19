@@ -9,6 +9,7 @@
     "apiVersion":"",
     "authUrl":"your_auth_service_URL",
     "auth_token":"your_auth_service_token",
-    "decodedTokenFieldName": "uploadms"
+    "decodedTokenFieldName": "uploadms",
+    "appAdminTokenType": ["contentui"]
   }
 }

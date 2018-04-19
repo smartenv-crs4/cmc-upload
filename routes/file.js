@@ -222,6 +222,37 @@ router.get('/file/:id', (req, res, next) => {
 
 
 /**
+ * @api {post} /file/:id/actions/owner return the owner of an object
+ * @apiGroup Upload
+ *
+ * @apiDescription  returns the id that identifies the owner of the stored object
+ * 
+ * @apiParam  {String} id   The unique identifier of the resource
+ *
+ * @apiSuccess (200) body   The file is removed
+ */
+router.post('/file/:id/actions/owner', (req, res, next) => {
+    let id = req.params.id;
+    let db = mongoConnection.get();
+    
+    if(!mongo.ObjectID.isValid(id))
+        res.boom.badRequest();
+    else {
+        id = new mongo.ObjectId(id);
+        db.collection('files').findOne({_id:id}, function(err, result) {
+            if(err)
+                res.boom.badImplementation();
+            else if(result == null)
+                res.boom.notFound();
+            else {
+                res.json({id:result._id, owner:result.owner})
+            }
+        });
+    }
+});
+
+
+/**
  * @api {delete} /file/:id Delete a resource from the storage system
  * @apiGroup Upload
  *
@@ -258,7 +289,10 @@ router.delete('/file/:id', security.authWrap, (req, res, next) => {
         return res.boom.notFound();
       }
       getAdminTypes(admtypes => {
-        if((result.owner && uid == result.owner) || admtypes.indexOf(req[authField].token.type) != -1) {//owner or Admin
+        //auth owner, Admin or parametric admin (default.json)
+        if((result.owner && uid == result.owner) 
+          || admtypes.indexOf(req[authField].token.type) != -1
+          || config.appAdminTokenType.indexOf(req[authField].token.type) != -1) {
           cleanup(driver, result, (error) => {
             if(error) {
               console.log("WARNING: unable to remove chunks");
