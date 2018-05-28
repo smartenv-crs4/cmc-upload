@@ -95,7 +95,7 @@ router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSiz
         return;
       }
 
-      let writeStream = driver.newWriteStream(filename);
+      let writeStream = driver.newWriteStream(filename, mimetype);
       if(!(writeStream instanceof DriverStream)) {
         console.prod("Invalid Driver stream, must be instance of BaseDriverStream, check your driver implementation");
         res.boom.badImplementation('Invalid storage driver');
@@ -127,6 +127,7 @@ router.post('/file', [security.authWrap, busboy({immediate:true, limits:{fileSiz
         else {
           newFile[fieldname] = storedFile;
           newFile.owner = owner;
+          if(mimetype) newFile[fieldname].contentType = mimetype;
         }
 
         if(streamCounter == 0 && Object.keys(newFile).length > 0) {
@@ -214,6 +215,8 @@ router.get('/file/:id', (req, res, next) => {
         res.boom.badImplementation;
         return;
       }
+      
+      if(result[tag].contentType) res.set('Content-Type', result[tag].contentType);
       res.set('Content-Length', result[tag].size);
       readStream.getStream().pipe(res); 
     });

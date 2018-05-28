@@ -46,8 +46,18 @@ class Driver {
     this.gfs = Grid(db.get(), mongo);
   }
 
-  newWriteStream(filename) {
-    return new DriverStream(this.gfs.createWriteStream({filename: filename}));
+  newWriteStream(filename, contentType) {
+    let fileObj = {filename: filename};
+    ////////////////////////////////////////////////////////////////////
+    // FIXME! Non sta salvando il contentType nella collection gridfs //
+    ////////////////////////////////////////////////////////////////////
+    if(contentType) {
+      fileObj.mode = 'w';
+      fileObj.contentType = contentType;
+    }
+    //console.log(fileObj)
+
+    return new DriverStream(this.gfs.createWriteStream(fileObj));
   }  
 
   newReadStream(id) {
